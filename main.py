@@ -29,7 +29,7 @@ def display_document_summary(result):
     print(f"Document ID: {result['id']}")
     print(f"Filename: {result['filename']}")
     print(f"Word count: {result['word_count']}")
-    print(f"File size: {result['file_size']}bytes")
+    print(f"File size: {format_file_size(result['file_size'])}")
     print(f"Status: {result['status']}")
     print(f"Processed at: {result['processed_at']}")
 
@@ -62,6 +62,15 @@ def clean_text(text):
 
     return text
 
+def format_file_size(size):
+    if size < 1024:
+        return f"{size} bytes"
+
+    if size < 1024 * 1024:
+        return f"{size / 1024: .2f} KB"
+
+    return f"{size / (1024 * 1024): .2f} MB"
+
 def process_document(filename):
     print(f"Starting processing for '{filename}'...")
 
@@ -72,6 +81,8 @@ def process_document(filename):
 
     word_count = len(extracted_text.split())
     print(f"Word count: {word_count}")
+
+    character_count = len(extracted_text)
 
     file_size = os.path.getsize(filename)
 
