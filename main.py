@@ -19,19 +19,27 @@ def show_menu():
     print("5. Exit")
 
 def extract_text(filename):
-    with open(filename, "r" , encoding="utf-8") as file:
-        text = file.read()
+    try:
+        with open(filename, "r", encoding="utf-8") as file:
+            text = file.read()
 
-    return text
+        return text
+
+    except Exception as error:
+        print( f"Error reading file: {error}")
+        return None
 
 def display_document_summary(result):
     print("\n--- Document Summary ---")
     print(f"Document ID: {result['id']}")
     print(f"Filename: {result['filename']}")
+    print(f"File type: {result['file_type']}")
     print(f"Word count: {result['word_count']}")
+    print(f"Character count: {result['character_count']}")
     print(f"File size: {format_file_size(result['file_size'])}")
     print(f"Status: {result['status']}")
     print(f"Processed at: {result['processed_at']}")
+    print(f"Preview: {result['preview']}")
 
 def view_history(processed_documents):
     if len(processed_documents) == 0:
@@ -67,15 +75,40 @@ def format_file_size(size):
         return f"{size} bytes"
 
     if size < 1024 * 1024:
-        return f"{size / 1024: .2f} KB"
+        return f"{size / 1024:.2f} KB"
 
-    return f"{size / (1024 * 1024): .2f} MB"
+    return f"{size / (1024 * 1024):.2f} MB"
+
+def create_preview(text):
+    if len(text) <= 100:
+        return text
+
+    return text[:100] + "..."
 
 def process_document(filename):
+    status = "processing"
+
     print(f"Starting processing for '{filename}'...")
+    print(f"Status: {status}")
 
     extracted_text = extract_text(filename)
+
+    if extracted_text is None:
+        return {
+            "id": str(uuid.uuid4()),
+            "filename": filename,
+            "text": "",
+            "word_count": 0,
+            "character_count": 0,
+            "file_type": os.path.splitext(filename)[1].lower(),
+            "preview": "",
+            "status": "failed",
+            "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "file_size": os.path.getsize(filename)
+        }
+
     extracted_text = clean_text(extracted_text)
+
     print("Extracted text:")
     print(extracted_text)
 
@@ -83,8 +116,10 @@ def process_document(filename):
     print(f"Word count: {word_count}")
 
     character_count = len(extracted_text)
+    preview = create_preview(extracted_text)
 
     file_size = os.path.getsize(filename)
+    file_type = os.path.splitext(filename)[1].lower()
 
     print("Analyzing extracted text...")
 
@@ -93,7 +128,11 @@ def process_document(filename):
         "filename": filename,
         "text": extracted_text,
         "word_count" : word_count,
+        "character_count" : character_count,
+        "file_type": file_type,
+        "preview": preview,
         "status": "completed",
+        "error": None,
         "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "file_size": file_size
     }
@@ -117,6 +156,9 @@ def upload_document(processed_documents):
     processed_documents.append(result)
 
     display_document_summary(result)
+
+    if result["status"] == "failed":
+        return "Document processing failed."
 
     return "Document processing finished."
 
