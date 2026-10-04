@@ -2,6 +2,8 @@ import os
 import uuid
 from datetime import datetime
 
+MAX_FILE_SIZE = 5 * 1024 * 1024
+
 def greet_user(name):
     if name == "glynis":
         return "Welcome back, Glynis!"
@@ -48,9 +50,12 @@ def view_history(processed_documents):
     print("\n--- Processing History ---")
 
     for document in processed_documents:
+        print(f"Document ID: {document['id']}")
         print(f"Filename: {document['filename']}")
+        print(f"File type : {document['file_type']}")
         print(f"Word count: {document['word_count']}")
         print(f"Status: {document['status']}")
+        print(f"Processed at: {document['processed_at']}")
         print("-------------------------")
 
     return "End of processing history."
@@ -103,6 +108,7 @@ def process_document(filename):
             "file_type": os.path.splitext(filename)[1].lower(),
             "preview": "",
             "status": "failed",
+            "error": "Unable to read document.",
             "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "file_size": os.path.getsize(filename)
         }
@@ -136,6 +142,16 @@ def process_document(filename):
         "processed_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "file_size": file_size
     }
+
+def get_processing_message(result):
+    if result["status"] == "completed":
+        return "Document processing finished successfully."
+
+    if result["status"] == "failed":
+        return f"Document processing failed: {result['error']}"
+
+    return "Document processing is still in progress."
+
 def upload_document(processed_documents):
     filename = input("Enter the document filename: ").strip()
 
@@ -147,6 +163,14 @@ def upload_document(processed_documents):
 
     if not os.path.exists(filename):
         return f"File '{filename}' does not exist."
+
+    if not os.path.isfile(filename):
+        return f" '{filename}' is not a valid file."
+
+    file_size = os.path.getsize(filename)
+
+    if file_size > MAX_FILE_SIZE:
+        return "File is too large. Maximum allowed size is 5 MB."
     
     for document in processed_documents:
         if document["filename"].lower() == filename.lower():
@@ -157,10 +181,7 @@ def upload_document(processed_documents):
 
     display_document_summary(result)
 
-    if result["status"] == "failed":
-        return "Document processing failed."
-
-    return "Document processing finished."
+    return get_processing_message(result)
 
 def generate_answer(question):
     question = question.lower()
