@@ -113,6 +113,21 @@ def process_document(filename):
             "file_size": os.path.getsize(filename)
         }
 
+    if extracted_text.strip() == "":
+        return {
+            "id": str(uuid.uuid4()),
+            "filename": filename,
+            "text": "",
+            "word_count": 0,
+            "character_count": 0,
+            "file_type": os.path.splitext(filename)[1].lower(),
+            "preview": "",
+            "status": "failed",
+            "error": "Document is empty.",
+            "processed at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "file_size": os.path.getsize(filename)
+        }
+
     extracted_text = clean_text(extracted_text)
 
     print("Extracted text:")
